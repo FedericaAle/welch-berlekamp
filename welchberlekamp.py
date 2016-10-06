@@ -46,7 +46,6 @@ def makeEncoderDecoder(n, k, p):
                      # ensure coefficient of x^e in E(x) is 1
 
          if debug:
-            print("\ne is %r" % e)
             print("\nsystem is:\n\n")
             for row in system:
                print("\t%r" % (row,))
