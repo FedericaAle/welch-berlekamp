@@ -21,11 +21,18 @@ def makeEncoderDecoder(n, k, p):
       if not all(x < p for x in message):
          raise Exception("Message is improperly encoded as integers < p. It was:\n%r" % message)
 
-      thePoly = Poly(message)
-      return [[Fp(i), thePoly(Fp(i))] for i in range(n)]
+      def row(i, b):
+         return [Fp(i ** (j)) for j in range(k)] + [Fp(b)]
+      system = [row(i, message[i]) for i in range(k)]
+    
+      interpolated = someSolution(system, freeVariableValue=1)
+      thePoly = Poly(interpolated)
+      print("The polynomial encoding the message is:")
+      print(thePoly)
+      return [thePoly(Fp(i)) for i in range(n)]
 
 
-   def solveSystem(encodedMessage, debug=False):
+   def solveSystem(encodedMessage, debug=True):
       for e in range(maxE, 0, -1):
          ENumVars = e+1
          QNumVars = e+k
@@ -35,7 +42,7 @@ def makeEncoderDecoder(n, k, p):
                     [0]) # the "extended" part of the linear system
 
          system = ([row(i, a, b) for (i, (a,b)) in enumerate(encodedMessage)] +
-                   [[0] * (ENumVars-1) + [1] + [0] * (QNumVars) + [1]])
+                   [[Fp(0)] * (ENumVars-1) + [Fp(1)] + [Fp(0)] * (QNumVars) + [Fp(1)]])
                      # ensure coefficient of x^e in E(x) is 1
 
          if debug:
@@ -65,13 +72,15 @@ def makeEncoderDecoder(n, k, p):
 
 
    def decode(encodedMessage):
+      encodedMessage = [[Fp(i), encodedMessage[i]] for i in range(len(encodedMessage))]
       Q,E = solveSystem(encodedMessage)
 
-      P, remainder = Q.__divmod__(E)
+      Pcoefs, remainder = Q.__divmod__(E)
       if remainder != 0:
          raise Exception("Q is not divisibly by E!")
-
-      return P.coefficients
+      P = Poly(Pcoefs)
+      return [P(Fp(i)) for i in range(k)]
+      
 
 
    return encode, decode, solveSystem
