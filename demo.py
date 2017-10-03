@@ -24,4 +24,6 @@ received[3]=Fp(2) #Changing a message in received.
 received[4]=Fp(10) #Changing a message in received.
 print("The received message is:")
 print(received)
-dec(received)
+decoded = dec(received)
+print("Decoded message is:")
+print(decoded)

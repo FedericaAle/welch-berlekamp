@@ -27,6 +27,8 @@ def makeEncoderDecoder(n, k, p):
     
       interpolated = someSolution(system, freeVariableValue=1)
       thePoly = Poly(interpolated)
+      print("Original message is:")
+      print(message)
       print("The polynomial encoding the message is:")
       print(thePoly)
       return [thePoly(Fp(i)) for i in range(n)]
@@ -34,32 +36,31 @@ def makeEncoderDecoder(n, k, p):
 
    def solveSystem(encodedMessage, debug=True):
       for e in range(maxE, 0, -1):
-         ENumVars = e+1
+         ENumVars = e
          QNumVars = e+k
-         def row(i, a, b):
-            return ([b * a**j for j in range(ENumVars)] +
-                    [-1 * a**j for j in range(QNumVars)] +
-                    [0]) # the "extended" part of the linear system
+         def row(i, x, r):
+            return ([r * x**j for j in range(ENumVars)] +
+                    [-1 * x**j for j in range(QNumVars)] +
+                    [-r * x**ENumVars]) # the "extended" part of the linear system
 
-         system = ([row(i, a, b) for (i, (a,b)) in enumerate(encodedMessage)] +
-                   [[Fp(0)] * (ENumVars-1) + [Fp(1)] + [Fp(0)] * (QNumVars) + [Fp(1)]])
-                     # ensure coefficient of x^e in E(x) is 1
+         system = ([row(i, a, b) for (i, (a,b)) in enumerate(encodedMessage)])
+                     # Add one more row in the end ensure coefficient of x^e in E(x) is 1
 
          if debug:
-            print("\nsystem is:\n\n")
+            print("\nSystem of equations is:\n\n")
             for row in system:
                print("\t%r" % (row,))
 
          solution = someSolution(system, freeVariableValue=1)
-         E = Poly([solution[j] for j in range(e + 1)])
-         Q = Poly([solution[j] for j in range(e + 1, len(solution))])
+         E = Poly([solution[j] for j in range(ENumVars)] + [Fp(1)])
+         Q = Poly([solution[j] for j in range(ENumVars, len(solution))])
 
          if debug:
-            print("\nreduced system is:\n\n")
+            print("\nReduced system is:\n\n")
             for row in system:
                print("\t%r" % (row,))
 
-            print("solution is %r" % (solution,))
+            print("Solution is %r" % (solution,))
             print("Q is %r" % (Q,))
             print("E is %r" % (E,))
 
@@ -78,6 +79,8 @@ def makeEncoderDecoder(n, k, p):
       if remainder != 0:
          raise Exception("Q is not divisibly by E!")
       P = Poly(Pcoefs)
+      print("Decoded polynomial r(x) = Q(x) / E(x) is: ")
+      print(P)
       return [P(Fp(i)) for i in range(k)]
       
 
